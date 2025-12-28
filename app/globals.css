@@ -1,0 +1,231 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Colorful pixel art retro colors inspired by Saweria - vibrant and cheerful */
+  --background: 250 100% 98%;
+  --foreground: 240 10% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 15%;
+  --primary: 280 90% 60%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 200 95% 55%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 250 50% 95%;
+  --muted-foreground: 240 5% 40%;
+  --accent: 340 95% 60%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 280 40% 75%;
+  --input: 250 50% 95%;
+  --ring: 280 90% 60%;
+  --success: 150 80% 50%;
+  --warning: 40 100% 55%;
+  --info: 200 95% 55%;
+  --chart-1: 280 90% 60%;
+  --chart-2: 200 95% 55%;
+  --chart-3: 340 95% 60%;
+  --chart-4: 40 100% 55%;
+  --chart-5: 150 80% 50%;
+  --radius: 0rem;
+  --sidebar: 250 100% 98%;
+  --sidebar-foreground: 240 10% 15%;
+  --sidebar-primary: 280 90% 60%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 250 50% 95%;
+  --sidebar-accent-foreground: 240 10% 15%;
+  --sidebar-border: 280 40% 75%;
+  --sidebar-ring: 280 90% 60%;
+}
+
+.dark {
+  /* Dark mode with vibrant colors */
+  --background: 240 20% 10%;
+  --foreground: 250 100% 98%;
+  --card: 240 15% 14%;
+  --card-foreground: 250 100% 98%;
+  --popover: 240 15% 14%;
+  --popover-foreground: 250 100% 98%;
+  --primary: 280 90% 65%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 200 95% 60%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 240 15% 20%;
+  --muted-foreground: 250 20% 70%;
+  --accent: 340 95% 65%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 280 30% 30%;
+  --input: 240 15% 20%;
+  --ring: 280 90% 65%;
+  --success: 150 80% 55%;
+  --warning: 40 100% 60%;
+  --info: 200 95% 60%;
+  --chart-1: 280 90% 65%;
+  --chart-2: 200 95% 60%;
+  --chart-3: 340 95% 65%;
+  --chart-4: 40 100% 60%;
+  --chart-5: 150 80% 55%;
+  --sidebar: 240 20% 12%;
+  --sidebar-foreground: 250 100% 98%;
+  --sidebar-primary: 280 90% 65%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 240 15% 20%;
+  --sidebar-accent-foreground: 250 100% 98%;
+  --sidebar-border: 280 30% 30%;
+  --sidebar-ring: 280 90% 65%;
+}
+
+@theme inline {
+  --font-pixel: "Pixelify Sans", "Press Start 2P", "Courier New", monospace;
+  --font-press: "Press Start 2P", "Courier New", monospace;
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-success: hsl(var(--success));
+  --color-warning: hsl(var(--warning));
+  --color-info: hsl(var(--info));
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Enhanced pixel art styling with colorful shadows */
+  .pixel-border {
+    image-rendering: pixelated;
+    box-shadow: 0 0 0 3px var(--color-border), 0 0 0 6px var(--color-primary), 6px 6px 0 0 rgba(0, 0, 0, 0.15);
+  }
+
+  .pixel-button {
+    image-rendering: pixelated;
+    box-shadow: inset -4px -4px 0 0 rgba(0, 0, 0, 0.2), inset 4px 4px 0 0 rgba(255, 255, 255, 0.3);
+    transition: all 0.1s;
+  }
+
+  .pixel-button:hover {
+    box-shadow: inset -2px -2px 0 0 rgba(0, 0, 0, 0.2), inset 2px 2px 0 0 rgba(255, 255, 255, 0.3);
+    transform: translate(2px, 2px);
+  }
+
+  .pixel-button:active {
+    box-shadow: inset -4px -4px 0 0 rgba(0, 0, 0, 0.4), inset 4px 4px 0 0 rgba(255, 255, 255, 0.1);
+    transform: translate(4px, 4px);
+  }
+
+  .pixel-text {
+    font-family: var(--font-press);
+    text-shadow: 3px 3px 0 var(--color-accent), -1px -1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  .pixel-bg {
+    background-color: var(--color-background);
+    background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        var(--color-muted) 2px,
+        var(--color-muted) 4px
+      ), repeating-linear-gradient(90deg, transparent, transparent 2px, var(--color-muted) 2px, var(--color-muted) 4px);
+    background-size: 20px 20px;
+  }
+
+  .pixel-card {
+    background: linear-gradient(135deg, var(--color-card), var(--color-muted));
+    box-shadow: 0 0 0 4px var(--color-border), 0 0 0 8px var(--color-primary), 8px 8px 0 0 rgba(0, 0, 0, 0.15);
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite;
+  }
+
+  @keyframes glow {
+    0%,
+    100% {
+      box-shadow: 0 0 10px var(--color-primary), 0 0 20px var(--color-accent);
+    }
+    50% {
+      box-shadow: 0 0 20px var(--color-primary), 0 0 40px var(--color-accent);
+    }
+  }
+
+  /* Colorful scrollbar */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-muted);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--color-primary), var(--color-accent));
+    border: 2px solid var(--color-muted);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--color-accent), var(--color-secondary));
+  }
+}

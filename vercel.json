@@ -1,0 +1,25 @@
+{
+  "buildCommand": "next build",
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    }
+  ],
+  "env": {
+    "NEXT_PUBLIC_FIREBASE_API_KEY": "AIzaSyAZ92fn_ck_A7WYhAZK6FCrTjLdHn0ZOvU",
+    "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN": "cs-kograph.firebaseapp.com",
+    "NEXT_PUBLIC_FIREBASE_PROJECT_ID": "cs-kograph",
+    "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET": "cs-kograph.firebasestorage.app",
+    "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "312702469162",
+    "NEXT_PUBLIC_FIREBASE_APP_ID": "1:312702469162:web:6bd97fb0a317762bfa2f53",
+
+    "FIREBASE_ADMIN_PROJECT_ID": "cs-kograph",
+    "FIREBASE_ADMIN_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@cs-kograph.iam.gserviceaccount.com",
+    "FIREBASE_ADMIN_PRIVATE_KEY": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCgkvUI+LH46Hkf\nFwrszit8obv+uVD/hq2fEpJiA0xtLffbCszqfBqL9Rd2H52x6vR5kluF/kYK2t6G\nWJJO0l3d+kRtWphSk3D0QtKTCzJld4V+vG0zWNOy9VyrKfXrJP/4FLwQD6OLXjkG\nYzzqMerWdlRpdOhZUfSrsaQBY7+R5S+w8LyHWJtO+H8iCd6JJuI5yJe1bjOUf+lW\nPVVYDjpCNeTwlAs+kKFz0Eb6XMfHFK0BETWst7KVS/IGNLI68TigYNvwP5zkdjgm\n8BdNckLJpbupPEz/dIsq2mNY5QqK5UW1EGlu2eU8lA/htiyiwNDSK5OsRWz+5hSD\nCN1bSxY/AgMBAAECggEAKQZi5G/lyJpcl7zjZa0nHyiTR3lBYIegREwSakg9doeQ\nE76mrCIZBjkQTXW2bIaC/6yNBab5bjyNLfXjK5BDuzr90JKc6DwTV9TayAbMUXBA\nAylRHRVMwSQ/ENwfoHxLia6CffgA6NKh7yfboFowjaqd1nOwCWIPCO7R4CkEANoN\njqhf5W3EuEH7F3pTwg1JyzCSuasCJww2+p4+FFwsRfAAoAOk0aE38jmK+lbnNoPD\nhcWtLgQWAUlayoPmJVCIjcM4T/SNeAyZL/iEweZkYotwu9yNRXaVldskq83W3x7Q\n2hdcSIud8Hr1TAuOzhI7rVTn1Ptps8CaeKTZ+cnjwQKBgQDX63WrGoWuAUArhcHu\nUc4n0XknIZmBS201xqyN0S62vInl0rN+9ldvSzEa+GU/HUmhKpQwEFdcWtcgfFl9\nxmKwyUd79ElkZwtg1+H6b2a3NYQ2SUcW2A9q+eMKiUngOma0dN5UgEK3d6BSNSiv\nhJibkHodOtS3twLku+l4Lr55fQKBgQC+YXXz+zs6BhCVwlwSB6D0vkKBqrzoziyK\nHV5A8X7BQfe63bhbCClkvk846de1eBa5/MD7hlc5Zxwzsj1KFgeHvnTk46tnodW5\nJmvaqMqAT8LND4SLX/d8tsPQkiq4Hv5DFEg+w6kPQDq3VDriXhxRJofrd6DrWw4l\nPWi+HbC7awKBgQCJ5lfAb6/w8duJ8GNrUdPYmnBGDa98ZC/bqIeMC41KKB/qKCd7\nbtloux0hnIMNTCc6R3ddOxKQaXP7y29cZNejEOoWwG4fMbCSqU4qI/v2Brfp8+Lz\nNAqkx/O5RvVnv+TYW8ujLEdv5Xb/CfRyJL1SnXNgN7Kjor62V01E9JWyAQKBgE8R\nxV5+wnt3112LqpemaXgcqRyXn/wE3UTDq8jHRADZ+By5R38vZZm83MRjgr6Q0MeQ\nLUqJ4iIqK/FgnsntWlVLidsin6bb9Rr/1R2squYdumdWgZMtWWmHss4mVu2/mZSc\nkODYfJej8n7/0bEAqzwdB6iJN+FoIPjgh2cmh6dfAoGAaOKykDRPRq1R87/WYJSy\nf0UgkNbYxux04ZCPp4E0EZ4mDIetrHO1+jK59zk3gnWmuLauBAmYWJbvuQ88S5fz\nYheylQGphW8XidkUZPMICvqdmz0fpeePCMR/QggGD2WqWoKwVK530+imzOEBWb96\n40IZV0zOnToaRjBqadnWHZs=\n-----END PRIVATE KEY-----\n",
+
+    "TELEGRAM_BOT_TOKEN": "8044709439:AAGOIj8FIDplHVPAQN2IGuYeyA4rHEW9QsU",
+    "TELEGRAM_CHAT_ID": "6450551010"
+  }
+}
