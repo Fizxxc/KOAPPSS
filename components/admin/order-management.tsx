@@ -62,18 +62,23 @@ export function OrderManagement() {
       return
     }
 
-    try {
-      const response = await fetch(`/api/orders/${orderId}/verify-payment`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          paymentStatus: status,
-          accountEmail: status === "verified" ? accountEmail : undefined,
-          accountPassword: status === "verified" ? accountPassword : undefined,
-        }),
-      })
+   try {
+  const response = await fetch(`/api/orders/${orderId}/verify-payment`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      paymentStatus: status,
+      accountEmail: status === "verified" ? accountEmail : null,
+      accountPassword: status === "verified" ? accountPassword : null,
+    }),
+  })
 
-      if (!response.ok) throw new Error("Failed to verify payment")
+  const data = await response.json()
+
+  if (!response.ok) 
+    throw new Error(data.message || "Failed to verify payment")
 
       Swal.fire({
         title: status === "verified" ? "Pembayaran Diverifikasi!" : "Pembayaran Ditolak",
