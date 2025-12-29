@@ -8,6 +8,7 @@
     }
   ],
   "env": {
+    "NEXT_PUBLIC_SITE_URL": "https://kograph.vercel.app",
     "NEXT_PUBLIC_FIREBASE_API_KEY": "AIzaSyAZ92fn_ck_A7WYhAZK6FCrTjLdHn0ZOvU",
     "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN": "cs-kograph.firebaseapp.com",
     "NEXT_PUBLIC_FIREBASE_PROJECT_ID": "cs-kograph",

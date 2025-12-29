@@ -8,8 +8,25 @@ export async function POST(
   { params }: { params: { orderId: string } }
 ) {
   try {
-    const { orderId } = params
-    const body = await req.json()
+    /* ================= PARAMS ================= */
+    const orderId = params?.orderId
+    if (!orderId) {
+      return NextResponse.json(
+        { error: "Order ID is required" },
+        { status: 400 }
+      )
+    }
+
+    /* ================= BODY ================= */
+    let body: any = {}
+    try {
+      body = await req.json()
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON body" },
+        { status: 400 }
+      )
+    }
 
     const { paymentStatus, accountEmail, accountPassword } = body
 
@@ -20,6 +37,7 @@ export async function POST(
       )
     }
 
+    /* ================= ORDER ================= */
     const orderRef = doc(db, "orders", orderId)
     const orderSnap = await getDoc(orderRef)
 
@@ -32,6 +50,7 @@ export async function POST(
 
     const orderData: any = orderSnap.data() || {}
 
+    /* ================= UPDATE DATA ================= */
     const updateData: any = {
       paymentStatus,
       updatedAt: serverTimestamp(),
@@ -46,10 +65,10 @@ export async function POST(
         )
       }
 
+      updateData.status = "completed"
       updateData.accountEmail = accountEmail
       updateData.accountPassword = accountPassword
       updateData.accountSentAt = serverTimestamp()
-      updateData.status = "completed"
 
       /* 🔔 In-app notification */
       if (orderData.userId && orderData.userId !== "guest") {
@@ -64,9 +83,11 @@ export async function POST(
         })
       }
 
-      /* 📩 Telegram message (SAFE) */
+      /* ================= TELEGRAM MESSAGE ================= */
       const itemsText = Array.isArray(orderData.items)
-        ? orderData.items.map((item: any) => `• ${item.productName}`).join("\n")
+        ? orderData.items
+            .map((item: any) => `• ${item?.productName || "Produk"}`)
+            .join("\n")
         : "-"
 
       const totalText =
@@ -76,7 +97,7 @@ export async function POST(
 
       const userName = orderData.userName || "Customer"
 
-      const userTelegramMessage = `
+      const telegramMessage = `
 ✅ <b>PEMBAYARAN TERVERIFIKASI - KOGRAPH APPS</b> ✅
 
 Halo ${userName},
@@ -93,20 +114,22 @@ ${itemsText}
 💰 Total: Rp ${totalText}
 
 <i>Simpan informasi akun Anda dengan aman.</i>
-<i>Jika ada pertanyaan, hubungi kami!</i>
-
-Terima kasih telah berbelanja di KOGRAPH - APPS! 🎉
       `.trim()
 
-      /* 🚀 Call Telegram API (AMAN) */
-      try {
-        await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/telegram`, {
+      /* ================= SAFE TELEGRAM CALL ================= */
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+      console.log("SITE_URL:", siteUrl)
+
+      if (siteUrl) {
+        fetch(`${siteUrl}/api/telegram`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: userTelegramMessage }),
+          body: JSON.stringify({ message: telegramMessage }),
+        }).catch(err => {
+          console.error("Telegram send failed:", err)
         })
-      } catch (err) {
-        console.error("Telegram send failed:", err)
+      } else {
+        console.warn("NEXT_PUBLIC_SITE_URL is not defined")
       }
     }
 
@@ -127,6 +150,7 @@ Terima kasih telah berbelanja di KOGRAPH - APPS! 🎉
       }
     }
 
+    /* ================= SAVE ================= */
     await updateDoc(orderRef, updateData)
 
     return NextResponse.json({ success: true })
@@ -138,5 +162,3 @@ Terima kasih telah berbelanja di KOGRAPH - APPS! 🎉
     )
   }
 }
-
-console.log("SITE_URL:", process.env.NEXT_PUBLIC_SITE_URL)
