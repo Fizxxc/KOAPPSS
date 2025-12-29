@@ -138,3 +138,5 @@ Terima kasih telah berbelanja di KOGRAPH - APPS! 🎉
     )
   }
 }
+
+console.log("SITE_URL:", process.env.NEXT_PUBLIC_SITE_URL)
