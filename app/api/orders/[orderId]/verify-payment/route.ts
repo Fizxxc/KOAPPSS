@@ -1,113 +1,71 @@
 import { NextResponse } from "next/server"
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore"
-import { db } from "@/lib/firebase/config"
-import { createNotification } from "@/lib/firebase/utils"
+import { doc, getDoc, updateDoc } from "firebase/firestore"
+import { db } from "@/lib/firebase"
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } } // ✅ FIX
+  { params }: { params: { orderId?: string } }
 ) {
   try {
-    /* ================= PARAMS ================= */
-    const orderId = params?.id // ✅ FIX
+    // ===============================
+    // 🔥 AMBIL ORDER ID DI SINI
+    // ===============================
+    const url = new URL(req.url)
+
+    const orderId =
+      params?.orderId ||                     // App Router normal
+      url.searchParams.get("orderId") ||      // fallback
+      url.searchParams.get("nxtPorderId")     // kasus error kamu
+
     if (!orderId) {
       return NextResponse.json(
-        { error: "Order ID is required" },
+        { error: "Order ID tidak ditemukan" },
         { status: 400 }
       )
     }
 
-    /* ================= BODY ================= */
-    let body: any = {}
-    try {
-      body = await req.json()
-    } catch {
-      return NextResponse.json(
-        { error: "Invalid JSON body" },
-        { status: 400 }
-      )
-    }
-
-    const { paymentStatus, accountEmail, accountPassword } = body
-
-    if (!paymentStatus) {
-      return NextResponse.json(
-        { error: "paymentStatus is required" },
-        { status: 400 }
-      )
-    }
-
-    /* ================= ORDER ================= */
+    // ===============================
+    // 🔍 AMBIL DATA ORDER
+    // ===============================
     const orderRef = doc(db, "orders", orderId)
     const orderSnap = await getDoc(orderRef)
 
     if (!orderSnap.exists()) {
       return NextResponse.json(
-        { error: "Order not found" },
+        { error: "Order tidak ditemukan" },
         { status: 404 }
       )
     }
 
-    const orderData: any = orderSnap.data() || {}
+    const orderData = orderSnap.data()
 
-    /* ================= UPDATE DATA ================= */
-    const updateData: any = {
-      paymentStatus,
-      updatedAt: serverTimestamp(),
+    // ===============================
+    // ❌ CEGAH VERIFY ULANG
+    // ===============================
+    if (orderData.status === "completed") {
+      return NextResponse.json(
+        { message: "Order sudah diverifikasi" },
+        { status: 200 }
+      )
     }
 
-    /* ================= VERIFIED ================= */
-    if (paymentStatus === "verified") {
-      if (!accountEmail || !accountPassword) {
-        return NextResponse.json(
-          { error: "Account email & password required" },
-          { status: 400 }
-        )
-      }
+    // ===============================
+    // ✅ UPDATE STATUS
+    // ===============================
+    await updateDoc(orderRef, {
+      status: "completed",
+      verifiedAt: new Date().toISOString()
+    })
 
-      updateData.status = "completed"
-      updateData.accountEmail = accountEmail
-      updateData.accountPassword = accountPassword
-      updateData.accountSentAt = serverTimestamp()
+    return NextResponse.json({
+      success: true,
+      orderId
+    })
 
-      if (orderData.userId && orderData.userId !== "guest") {
-        await createNotification({
-          userId: orderData.userId,
-          type: "status_update",
-          title: "Pembayaran Terverifikasi!",
-          message: "Pembayaran Anda telah dikonfirmasi. Akun sudah dikirim.",
-          read: false,
-          link: "/profile",
-          createdAt: serverTimestamp(),
-        })
-      }
-    }
-
-    /* ================= REJECTED ================= */
-    if (paymentStatus === "rejected") {
-      updateData.status = "cancelled"
-
-      if (orderData.userId && orderData.userId !== "guest") {
-        await createNotification({
-          userId: orderData.userId,
-          type: "status_update",
-          title: "Pembayaran Ditolak",
-          message: `Pembayaran untuk order #${orderId.slice(0, 8)} ditolak.`,
-          read: false,
-          link: "/profile",
-          createdAt: serverTimestamp(),
-        })
-      }
-    }
-
-    /* ================= SAVE ================= */
-    await updateDoc(orderRef, updateData)
-
-    return NextResponse.json({ success: true })
   } catch (error) {
     console.error("VERIFY PAYMENT ERROR:", error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Server error" },
       { status: 500 }
     )
   }
