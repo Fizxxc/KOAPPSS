@@ -5,11 +5,11 @@ import { createNotification } from "@/lib/firebase/utils"
 
 export async function POST(
   req: Request,
-  { params }: { params: { orderId: string } }
+  { params }: { params: { id: string } } // ✅ FIX
 ) {
   try {
     /* ================= PARAMS ================= */
-    const orderId = params?.orderId
+    const orderId = params?.id // ✅ FIX
     if (!orderId) {
       return NextResponse.json(
         { error: "Order ID is required" },
@@ -70,7 +70,6 @@ export async function POST(
       updateData.accountPassword = accountPassword
       updateData.accountSentAt = serverTimestamp()
 
-      /* 🔔 In-app notification */
       if (orderData.userId && orderData.userId !== "guest") {
         await createNotification({
           userId: orderData.userId,
@@ -81,55 +80,6 @@ export async function POST(
           link: "/profile",
           createdAt: serverTimestamp(),
         })
-      }
-
-      /* ================= TELEGRAM MESSAGE ================= */
-      const itemsText = Array.isArray(orderData.items)
-        ? orderData.items
-            .map((item: any) => `• ${item?.productName || "Produk"}`)
-            .join("\n")
-        : "-"
-
-      const totalText =
-        typeof orderData.totalAmount === "number"
-          ? orderData.totalAmount.toLocaleString("id-ID")
-          : "-"
-
-      const userName = orderData.userName || "Customer"
-
-      const telegramMessage = `
-✅ <b>PEMBAYARAN TERVERIFIKASI - KOGRAPH APPS</b> ✅
-
-Halo ${userName},
-
-Pembayaran Anda untuk Order #${orderId.slice(0, 8)} telah dikonfirmasi!
-
-🎁 <b>AKUN ANDA:</b>
-📧 Email: <code>${accountEmail}</code>
-🔑 Password: <code>${accountPassword}</code>
-
-<b>Detail Pesanan:</b>
-${itemsText}
-
-💰 Total: Rp ${totalText}
-
-<i>Simpan informasi akun Anda dengan aman.</i>
-      `.trim()
-
-      /* ================= SAFE TELEGRAM CALL ================= */
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
-      console.log("SITE_URL:", siteUrl)
-
-      if (siteUrl) {
-        fetch(`${siteUrl}/api/telegram`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: telegramMessage }),
-        }).catch(err => {
-          console.error("Telegram send failed:", err)
-        })
-      } else {
-        console.warn("NEXT_PUBLIC_SITE_URL is not defined")
       }
     }
 
