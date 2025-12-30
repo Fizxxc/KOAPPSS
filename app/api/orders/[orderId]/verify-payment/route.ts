@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { doc, getDoc, updateDoc, serverTimestamp, Timestamp } from "firebase/firestore"
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase/config"
 import { createNotification } from "@/lib/firebase/utils"
 
@@ -60,7 +60,7 @@ export async function POST(
           message: "Pembayaran Anda telah dikonfirmasi. Akun sudah dikirim.",
           read: false,
           link: "/profile",
-          createdAt: serverTimestamp() as any,
+          createdAt: serverTimestamp(),
         })
       }
 
@@ -122,7 +122,7 @@ Terima kasih telah berbelanja di KOGRAPH - APPS! 🎉
           message: `Pembayaran untuk order #${orderId.slice(0, 8)} ditolak.`,
           read: false,
           link: "/profile",
-          createdAt: serverTimestamp() as any,
+          createdAt: serverTimestamp(),
         })
       }
     }
