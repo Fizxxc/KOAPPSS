@@ -1,33 +1,46 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore"
-import { db } from "@/lib/firebase/config"
+import { NextRequest, NextResponse } from "next/server"
+import { adminDb, adminTimestamp } from "@/lib/firebase/admin"
 import { createNotification } from "@/lib/firebase/utils"
 import type { Order } from "@/lib/firebase/types"
+import admin from "firebase-admin"
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ orderId: string }> }) {
+export const runtime = "nodejs"
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { orderId: string } }
+) {
   try {
-    const { orderId } = await params
+    const { orderId } = params
     const { status } = await req.json()
 
-    if (!["pending", "processing", "completed", "cancelled"].includes(status)) {
+    const allowedStatus: Order["status"][] = [
+      "pending",
+      "processing",
+      "completed",
+      "cancelled",
+    ]
+
+    if (!allowedStatus.includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 })
     }
 
-    // Get order
-    const orderDoc = await getDoc(doc(db, "orders", orderId))
-    if (!orderDoc.exists()) {
+    const orderRef = adminDb.collection("orders").doc(orderId)
+    const orderSnap = await orderRef.get()
+
+    if (!orderSnap.exists) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 })
     }
 
-    const order = { id: orderDoc.id, ...orderDoc.data() } as Order
+    const order = { id: orderSnap.id, ...orderSnap.data() } as Order
 
-    // Update status
-    await updateDoc(doc(db, "orders", orderId), {
+    // ✅ Update order status
+    await orderRef.update({
       status,
-      updatedAt: Timestamp.now(),
+      updatedAt: adminTimestamp.now(),
     })
 
-    // Create notification for user
+    // 🔔 User notification
     const statusMessages: Record<Order["status"], string> = {
       pending: "Menunggu konfirmasi",
       processing: "Sedang diproses",
@@ -42,22 +55,25 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ or
         title: "Update Status Pesanan",
         message: `Pesanan ${orderId.slice(0, 8)}: ${statusMessages[status]}`,
         read: false,
-        link: `/profile`,
-        createdAt: Timestamp.now(),
+        link: "/profile",
+        createdAt: adminTimestamp.now(),
       })
     }
 
-    // If completed, increment satisfied clients
+    // ✅ Increment satisfied clients (AMAN)
     if (status === "completed") {
-      await updateDoc(doc(db, "stats", "main"), {
-        clientsSatisfied: (await getDoc(doc(db, "stats", "main"))).data()?.clientsSatisfied + 1 || 1,
-        updatedAt: Timestamp.now(),
+      await adminDb.collection("stats").doc("main").update({
+        clientsSatisfied: admin.firestore.FieldValue.increment(1),
+        updatedAt: adminTimestamp.now(),
       })
     }
 
     return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error("[v0] Status update error:", error)
-    return NextResponse.json({ error: "Failed to update status" }, { status: 500 })
+  } catch (error: any) {
+    console.error("ORDER STATUS UPDATE ERROR:", error)
+    return NextResponse.json(
+      { error: "Failed to update status", detail: error.message },
+      { status: 500 }
+    )
   }
 }

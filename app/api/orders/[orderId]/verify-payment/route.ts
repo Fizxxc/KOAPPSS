@@ -1,40 +1,51 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore"
-import { db } from "@/lib/firebase/config"
+import { NextRequest, NextResponse } from "next/server"
+import { adminDb, adminTimestamp } from "@/lib/firebase/admin"
 import { createNotification } from "@/lib/firebase/utils"
+
+export const runtime = "nodejs" // ⬅️ WAJIB
 
 export async function POST(
   req: NextRequest,
   { params }: { params: { orderId: string } }
 ) {
   try {
-    const { accountEmail, accountPassword, paymentStatus } = await req.json()
+    const body = await req.json()
+    const { paymentStatus, accountEmail, accountPassword } = body
     const { orderId } = params
 
-    const orderRef = doc(db, "orders", orderId)
-    const orderSnap = await getDoc(orderRef)
+    if (!paymentStatus) {
+      return NextResponse.json(
+        { error: "paymentStatus is required" },
+        { status: 400 }
+      )
+    }
 
-    if (!orderSnap.exists()) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 })
+    const orderRef = adminDb.collection("orders").doc(orderId)
+    const orderSnap = await orderRef.get()
+
+    if (!orderSnap.exists) {
+      return NextResponse.json(
+        { error: "Order not found" },
+        { status: 404 }
+      )
     }
 
     const orderData = orderSnap.data()
 
     const updateData: any = {
       paymentStatus,
-      updatedAt: Timestamp.now(),
+      updatedAt: adminTimestamp.now(),
     }
 
-    // ✅ PAYMENT VERIFIED
+    // ✅ VERIFIED
     if (paymentStatus === "verified") {
       updateData.status = "completed"
 
       if (accountEmail) updateData.accountEmail = accountEmail
       if (accountPassword) updateData.accountPassword = accountPassword
-      updateData.accountSentAt = Timestamp.now()
+      updateData.accountSentAt = adminTimestamp.now()
 
-      // 🔔 In-app notification ONLY
-      if (orderData.userId && orderData.userId !== "guest") {
+      if (orderData?.userId && orderData.userId !== "guest") {
         await createNotification({
           userId: orderData.userId,
           type: "status_update",
@@ -42,35 +53,38 @@ export async function POST(
           message: "Pembayaran Anda telah diverifikasi. Akun sudah dikirim oleh admin.",
           read: false,
           link: "/profile",
-          createdAt: Timestamp.now(),
+          createdAt: adminTimestamp.now(),
         })
       }
     }
 
-    // ❌ PAYMENT REJECTED
+    // ❌ REJECTED
     if (paymentStatus === "rejected") {
       updateData.status = "cancelled"
 
-      if (orderData.userId && orderData.userId !== "guest") {
+      if (orderData?.userId && orderData.userId !== "guest") {
         await createNotification({
           userId: orderData.userId,
           type: "status_update",
           title: "Pembayaran Ditolak ❌",
-          message: `Pembayaran order #${orderId.slice(0, 8)} ditolak. Silakan hubungi admin.`,
+          message: "Pembayaran Anda ditolak. Silakan hubungi admin.",
           read: false,
           link: "/profile",
-          createdAt: Timestamp.now(),
+          createdAt: adminTimestamp.now(),
         })
       }
     }
 
-    await updateDoc(orderRef, updateData)
+    await orderRef.update(updateData)
 
     return NextResponse.json({ success: true })
-  } catch (error) {
+  } catch (error: any) {
     console.error("VERIFY PAYMENT ERROR:", error)
     return NextResponse.json(
-      { error: "Failed to verify payment" },
+      {
+        error: "Internal Server Error",
+        detail: error.message,
+      },
       { status: 500 }
     )
   }
