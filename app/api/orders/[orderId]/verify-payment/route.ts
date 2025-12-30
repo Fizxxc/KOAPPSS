@@ -1,23 +1,16 @@
-import { NextRequest, NextResponse } from "next/server"
-import { doc, getDoc, updateDoc, serverTimestamp, FieldValue } from "firebase/firestore"
+import { NextResponse } from "next/server"
+import { doc, getDoc, updateDoc, serverTimestamp, Timestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase/config"
 import { createNotification } from "@/lib/firebase/utils"
 
 export async function POST(
-  req: NextRequest,
+  req: Request,
   { params }: { params: { orderId: string } }
 ) {
   try {
     const { orderId } = params
-    
-    if (!orderId) {
-      return NextResponse.json(
-        { error: "Order ID is required" },
-        { status: 400 }
-      )
-    }
-
     const body = await req.json()
+
     const { paymentStatus, accountEmail, accountPassword } = body
 
     if (!paymentStatus) {
@@ -44,6 +37,7 @@ export async function POST(
       updatedAt: serverTimestamp(),
     }
 
+    /* ================= VERIFIED ================= */
     if (paymentStatus === "verified") {
       if (!accountEmail || !accountPassword) {
         return NextResponse.json(
@@ -57,6 +51,7 @@ export async function POST(
       updateData.accountSentAt = serverTimestamp()
       updateData.status = "completed"
 
+      /* 🔔 In-app notification */
       if (orderData.userId && orderData.userId !== "guest") {
         await createNotification({
           userId: orderData.userId,
@@ -65,10 +60,11 @@ export async function POST(
           message: "Pembayaran Anda telah dikonfirmasi. Akun sudah dikirim.",
           read: false,
           link: "/profile",
-          createdAt: serverTimestamp() as FieldValue,
+          createdAt: serverTimestamp() as any,
         })
       }
 
+      /* 📩 Telegram message (SAFE) */
       const itemsText = Array.isArray(orderData.items)
         ? orderData.items.map((item: any) => `• ${item.productName}`).join("\n")
         : "-"
@@ -80,8 +76,29 @@ export async function POST(
 
       const userName = orderData.userName || "Customer"
 
-      const userTelegramMessage = `✅ <b>PEMBAYARAN TERVERIFIKASI - KOGRAPH APPS</b> ✅\n\nHalo ${userName},\n\nPembayaran Anda untuk Order #${orderId.slice(0, 8)} telah dikonfirmasi!\n\n🎁 <b>AKUN ANDA:</b>\n📧 Email: <code>${accountEmail}</code>\n🔑 Password: <code>${accountPassword}</code>\n\n<b>Detail Pesanan:</b>\n${itemsText}\n\n💰 Total: Rp ${totalText}\n\nTerima kasih telah berbelanja di KOGRAPH - APPS! 🎉`
+      const userTelegramMessage = `
+✅ <b>PEMBAYARAN TERVERIFIKASI - KOGRAPH APPS</b> ✅
 
+Halo ${userName},
+
+Pembayaran Anda untuk Order #${orderId.slice(0, 8)} telah dikonfirmasi!
+
+🎁 <b>AKUN ANDA:</b>
+📧 Email: <code>${accountEmail}</code>
+🔑 Password: <code>${accountPassword}</code>
+
+<b>Detail Pesanan:</b>
+${itemsText}
+
+💰 Total: Rp ${totalText}
+
+<i>Simpan informasi akun Anda dengan aman.</i>
+<i>Jika ada pertanyaan, hubungi kami!</i>
+
+Terima kasih telah berbelanja di KOGRAPH - APPS! 🎉
+      `.trim()
+
+      /* 🚀 Call Telegram API (AMAN) */
       try {
         await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/telegram`, {
           method: "POST",
@@ -93,6 +110,7 @@ export async function POST(
       }
     }
 
+    /* ================= REJECTED ================= */
     if (paymentStatus === "rejected") {
       updateData.status = "cancelled"
 
@@ -104,7 +122,7 @@ export async function POST(
           message: `Pembayaran untuk order #${orderId.slice(0, 8)} ditolak.`,
           read: false,
           link: "/profile",
-          createdAt: serverTimestamp() as FieldValue,
+          createdAt: serverTimestamp() as any,
         })
       }
     }
@@ -120,3 +138,5 @@ export async function POST(
     )
   }
 }
+
+console.log("SITE_URL:", process.env.NEXT_PUBLIC_SITE_URL)
