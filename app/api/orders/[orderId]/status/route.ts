@@ -61,7 +61,7 @@ export async function PATCH(
     }
 
 
-    // ✅ Increment satisfied clients (AMANN)
+    // ✅ Increment satisfied clients (AMANNN)
     if (status === "completed") {
       await adminDb.collection("stats").doc("main").update({
         clientsSatisfied: admin.firestore.FieldValue.increment(1),

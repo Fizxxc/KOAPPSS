@@ -1,13 +1,13 @@
-import { NextRequest, NextResponse } from "next/server"
-import { adminDb, adminTimestamp } from "@/lib/firebase/admin"
-import { createNotification } from "@/lib/firebase/utils"
-import type { Order } from "@/lib/firebase/types"
+import { NextRequest, NextResponse } from "next/server";
+import { adminDb, adminFieldValue } from "@/lib/firebase/admin";
+import { createNotification } from "@/lib/firebase/utils";
+import type { Order } from "@/lib/firebase/types";
 
-export const runtime = "nodejs"
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
+    const body = await req.json();
     const {
       userId,
       userName,
@@ -16,18 +16,24 @@ export async function POST(req: NextRequest) {
       totalAmount,
       orderDetails,
       paymentProof,
-    } = body
+    } = body;
 
     if (!items || items.length === 0) {
-      return NextResponse.json({ error: "Cart is empty" }, { status: 400 })
+      return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
     }
 
     if (!paymentProof) {
-      return NextResponse.json({ error: "Payment proof is required" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Payment proof is required" },
+        { status: 400 }
+      );
     }
 
     if (!orderDetails?.phone) {
-      return NextResponse.json({ error: "Phone number is required" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Phone number is required" },
+        { status: 400 }
+      );
     }
 
     const orderData: Omit<Order, "id"> = {
@@ -40,26 +46,26 @@ export async function POST(req: NextRequest) {
       paymentProof,
       paymentStatus: "pending_verification",
       status: "pending",
-      createdAt: adminTimestamp.now(),
-      updatedAt: adminTimestamp.now(),
+      createdAt: adminFieldValue.serverTimestamp(),
+      updatedAt: adminFieldValue.serverTimestamp(),
       rated: false,
-    }
+    };
 
     // ✅ CREATE ORDER
-    const orderRef = await adminDb.collection("orders").add(orderData)
-    const orderId = orderRef.id
+    const orderRef = await adminDb.collection("orders").add(orderData);
+    const orderId = orderRef.id;
 
-    // ✅ UPDATE STATS (AMAN)
+    // ✅ UPDATE STATS (SAFE)
     try {
       await adminDb.collection("stats").doc("main").update({
-        projectsCompleted: adminDb.constructor.FieldValue.increment(1),
-        updatedAt: adminTimestamp.now(),
-      })
+        projectsCompleted: adminFieldValue.increment(1),
+        updatedAt: adminFieldValue.serverTimestamp(),
+      });
     } catch (err) {
-      console.error("Stats update failed:", err)
+      console.error("Stats update failed:", err);
     }
 
-    // 🔔 IN-APP NOTIFICATION
+    // 🔔 USER NOTIFICATION
     if (userId && userId !== "guest") {
       await createNotification({
         userId,
@@ -68,10 +74,11 @@ export async function POST(req: NextRequest) {
         message: `Pesanan ${orderId.slice(0, 8)} sedang diverifikasi.`,
         read: false,
         link: "/profile",
-        createdAt: adminTimestamp.now(),
-      })
+        createdAt: adminFieldValue.serverTimestamp(),
+      });
     }
 
+    // 🔔 ADMIN NOTIFICATION
     await createNotification({
       userId: "admin",
       type: "order",
@@ -79,29 +86,32 @@ export async function POST(req: NextRequest) {
       message: `Order baru dari ${userName} - Rp ${totalAmount.toLocaleString()}`,
       read: false,
       link: "/admin",
-      createdAt: adminTimestamp.now(),
-    })
+      createdAt: adminFieldValue.serverTimestamp(),
+    });
 
-    // 📣 TELEGRAM ADMIN ONLY (AMANN)
+    // 📣 TELEGRAM
     try {
       await fetch(`${req.nextUrl.origin}/api/telegram`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           photo: paymentProof,
-          caption: `🔔 ORDER BARU\nID: ${orderId.slice(0, 8)}\nUser: ${userName}\nTotal: Rp ${totalAmount.toLocaleString()}`,
+          caption: `🔔 ORDER BARU\nID: ${orderId.slice(
+            0,
+            8
+          )}\nUser: ${userName}\nTotal: Rp ${totalAmount.toLocaleString()}`,
         }),
-      })
+      });
     } catch (err) {
-      console.error("Telegram failed:", err)
+      console.error("Telegram failed:", err);
     }
 
-    return NextResponse.json({ success: true, orderId })
+    return NextResponse.json({ success: true, orderId });
   } catch (error: any) {
-    console.error("CREATE ORDER ERROR:", error)
+    console.error("CREATE ORDER ERROR:", error);
     return NextResponse.json(
       { error: "Failed to create order", detail: error.message },
       { status: 500 }
-    )
+    );
   }
 }

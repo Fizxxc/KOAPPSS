@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { adminDb, adminTimestamp } from "@/lib/firebase/admin"
 import { createNotification } from "@/lib/firebase/utils"
 
-export const runtime = "nodejs" // ⬅️ WAJIB
+export const runtime = "nodejs" // ⬅️ WAJIBB
 
 export async function POST(
   req: NextRequest,
