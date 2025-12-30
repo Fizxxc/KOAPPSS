@@ -1,8 +1,8 @@
 import { initializeApp, getApps, cert } from "firebase-admin/app"
 import { getAuth } from "firebase-admin/auth"
-import { getFirestore } from "firebase-admin/firestore"
+import { getFirestore, Timestamp } from "firebase-admin/firestore"
 
-const firebaseAdminConfig = {
+const adminConfig = {
   credential: cert({
     projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
     clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
@@ -10,8 +10,17 @@ const firebaseAdminConfig = {
   }),
 }
 
-const adminApp = getApps().length === 0 ? initializeApp(firebaseAdminConfig, "admin") : getApps()[0]
+// Init safe
+const adminApp =
+  getApps().find(app => app.name === "admin") ??
+  initializeApp(adminConfig, "admin")
+
 const adminAuth = getAuth(adminApp)
 const adminDb = getFirestore(adminApp)
 
-export { adminApp, adminAuth, adminDb }
+// 🔥 INI YANG KURANG
+const adminTimestamp = Timestamp
+
+adminDb.settings({ ignoreUndefinedProperties: true })
+
+export { adminApp, adminAuth, adminDb, adminTimestamp }

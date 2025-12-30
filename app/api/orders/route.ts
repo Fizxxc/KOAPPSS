@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
       createdAt: adminTimestamp.now(),
     })
 
-    // 📣 TELEGRAM ADMIN ONLY (AMAN)
+    // 📣 TELEGRAM ADMIN ONLY (AMANN)
     try {
       await fetch(`${req.nextUrl.origin}/api/telegram`, {
         method: "POST",
