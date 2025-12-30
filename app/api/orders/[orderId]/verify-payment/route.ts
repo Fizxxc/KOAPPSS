@@ -1,85 +1,52 @@
-import { NextResponse } from "next/server"
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore"
+import { type NextRequest, NextResponse } from "next/server"
+import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase/config"
 import { createNotification } from "@/lib/firebase/utils"
 
-export async function POST(
-  req: Request,
-  { params }: { params: { orderId: string } }
-) {
+export async function POST(req: NextRequest, { params }: { params: { orderId: string } }) {
   try {
-    const { orderId } = params
     const body = await req.json()
-
-    const { paymentStatus, accountEmail, accountPassword } = body
-
-    if (!paymentStatus) {
-      return NextResponse.json(
-        { error: "paymentStatus is required" },
-        { status: 400 }
-      )
-    }
+    const { accountEmail, accountPassword, paymentStatus } = body
+    const { orderId } = params
 
     const orderRef = doc(db, "orders", orderId)
     const orderSnap = await getDoc(orderRef)
 
     if (!orderSnap.exists()) {
-      return NextResponse.json(
-        { error: "Order not found" },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "Order not found" }, { status: 404 })
     }
 
-    const orderData: any = orderSnap.data() || {}
-
+    const orderData = orderSnap.data()
     const updateData: any = {
       paymentStatus,
-      updatedAt: serverTimestamp(),
+      updatedAt: Timestamp.now(),
     }
 
-    /* ================= VERIFIED ================= */
-    if (paymentStatus === "verified") {
-      if (!accountEmail || !accountPassword) {
-        return NextResponse.json(
-          { error: "Account email & password required" },
-          { status: 400 }
-        )
-      }
-
+    // If payment is verified and account credentials are provided
+    if (paymentStatus === "verified" && accountEmail && accountPassword) {
       updateData.accountEmail = accountEmail
       updateData.accountPassword = accountPassword
-      updateData.accountSentAt = serverTimestamp()
+      updateData.accountSentAt = Timestamp.now()
       updateData.status = "completed"
 
-      /* 🔔 In-app notification */
+      // Send notification to user
       if (orderData.userId && orderData.userId !== "guest") {
         await createNotification({
           userId: orderData.userId,
           type: "status_update",
           title: "Pembayaran Terverifikasi!",
-          message: "Pembayaran Anda telah dikonfirmasi. Akun sudah dikirim.",
+          message: `Pembayaran Anda telah dikonfirmasi. Akun Anda sudah dikirim ke email!`,
           read: false,
-          link: "/profile",
-          createdAt: serverTimestamp(),
+          link: `/profile`,
+          createdAt: Timestamp.now(),
         })
       }
 
-      /* 📩 Telegram message (SAFE) */
-      const itemsText = Array.isArray(orderData.items)
-        ? orderData.items.map((item: any) => `• ${item.productName}`).join("\n")
-        : "-"
-
-      const totalText =
-        typeof orderData.totalAmount === "number"
-          ? orderData.totalAmount.toLocaleString("id-ID")
-          : "-"
-
-      const userName = orderData.userName || "Customer"
-
+      // Send Telegram notification to user with account details
       const userTelegramMessage = `
 ✅ <b>PEMBAYARAN TERVERIFIKASI - KOGRAPH APPS</b> ✅
 
-Halo ${userName},
+Halo ${orderData.userName},
 
 Pembayaran Anda untuk Order #${orderId.slice(0, 8)} telah dikonfirmasi!
 
@@ -88,30 +55,27 @@ Pembayaran Anda untuk Order #${orderId.slice(0, 8)} telah dikonfirmasi!
 🔑 Password: <code>${accountPassword}</code>
 
 <b>Detail Pesanan:</b>
-${itemsText}
+${orderData.items.map((item: any) => `• ${item.productName}`).join("\n")}
 
-💰 Total: Rp ${totalText}
+💰 Total: Rp ${orderData.totalAmount.toLocaleString()}
 
 <i>Simpan informasi akun Anda dengan aman.</i>
 <i>Jika ada pertanyaan, hubungi kami!</i>
 
 Terima kasih telah berbelanja di KOGRAPH - APPS! 🎉
-      `.trim()
+      `
 
-      /* 🚀 Call Telegram API (AMAN) */
       try {
-        await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/telegram`, {
+        await fetch(`${req.nextUrl.origin}/api/telegram`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: userTelegramMessage }),
         })
-      } catch (err) {
-        console.error("Telegram send failed:", err)
+      } catch (error) {
+        console.error("[v0] Failed to send Telegram notification:", error)
       }
-    }
-
-    /* ================= REJECTED ================= */
-    if (paymentStatus === "rejected") {
+    } else if (paymentStatus === "rejected") {
+      // If payment is rejected
       updateData.status = "cancelled"
 
       if (orderData.userId && orderData.userId !== "guest") {
@@ -119,10 +83,10 @@ Terima kasih telah berbelanja di KOGRAPH - APPS! 🎉
           userId: orderData.userId,
           type: "status_update",
           title: "Pembayaran Ditolak",
-          message: `Pembayaran untuk order #${orderId.slice(0, 8)} ditolak.`,
+          message: `Pembayaran untuk order #${orderId.slice(0, 8)} ditolak. Silakan hubungi admin untuk info lebih lanjut.`,
           read: false,
-          link: "/profile",
-          createdAt: serverTimestamp(),
+          link: `/profile`,
+          createdAt: Timestamp.now(),
         })
       }
     }
@@ -131,12 +95,7 @@ Terima kasih telah berbelanja di KOGRAPH - APPS! 🎉
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("VERIFY PAYMENT ERROR:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    console.error("[v0] Payment verification error:", error)
+    return NextResponse.json({ error: "Failed to verify payment" }, { status: 500 })
   }
 }
-
-console.log("SITE_URL:", process.env.NEXT_PUBLIC_SITE_URL)
