@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { userId, userName, userEmail, items, totalAmount, orderDetails, paymentProof } = body
 
-    console.log("Order request received:", { userId, userName, itemsCount: items?.length })
+    console.log("[v0] Order request received:", { userId, userName, itemsCount: items?.length })
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 })
