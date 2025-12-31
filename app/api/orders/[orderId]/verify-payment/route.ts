@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb, adminFieldValue } from "@/lib/firebase/admin";
+import { adminDb, adminTimestamp } from "@/lib/firebase/admin";
 import { createNotification } from "@/lib/firebase/utils";
 
 export const runtime = "nodejs";
@@ -21,11 +21,11 @@ export async function POST(
       );
     }
 
-    // ✅ UPDATE PAYMENT STATUS
+    // ✅ UPDATE PAYMENT STATUS (AMAN)
     await orderRef.update({
       paymentStatus: "verified",
       status: "processing",
-      updatedAt: adminFieldValue.serverTimestamp(),
+      updatedAt: adminTimestamp.now(),
     });
 
     const order = orderSnap.data();
@@ -42,7 +42,7 @@ export async function POST(
         )} telah diverifikasi.`,
         read: false,
         link: "/profile",
-        createdAt: adminFieldValue.serverTimestamp(),
+        createdAt: adminTimestamp.now(),
       });
     }
 

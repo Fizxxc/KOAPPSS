@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb, adminFieldValue } from "@/lib/firebase/admin";
+import { adminDb, adminTimestamp } from "@/lib/firebase/admin";
 import { createNotification } from "@/lib/firebase/utils";
 import type { Order } from "@/lib/firebase/types";
+import admin from "firebase-admin";
 
 export const runtime = "nodejs";
 
@@ -39,10 +40,10 @@ export async function PATCH(
 
     const order = { id: orderSnap.id, ...orderSnap.data() } as Order;
 
-    // ✅ UPDATE STATUS
+    // ✅ UPDATE STATUS (AMAN)
     await orderRef.update({
       status,
-      updatedAt: adminFieldValue.serverTimestamp(),
+      updatedAt: adminTimestamp.now(),
     });
 
     // 🔔 USER NOTIFICATION
@@ -61,15 +62,15 @@ export async function PATCH(
         message: `Pesanan ${orderId.slice(0, 8)}: ${statusMessages[status]}`,
         read: false,
         link: "/profile",
-        createdAt: adminFieldValue.serverTimestamp(),
+        createdAt: adminTimestamp.now(),
       });
     }
 
-    // ✅ INCREMENT STATS (AMAN)
+    // ✅ UPDATE STATS (AMAN 100%)
     if (status === "completed") {
       await adminDb.collection("stats").doc("main").update({
-        clientsSatisfied: adminFieldValue.increment(1),
-        updatedAt: adminFieldValue.serverTimestamp(),
+        clientsSatisfied: admin.firestore.FieldValue.increment(1),
+        updatedAt: adminTimestamp.now(),
       });
     }
 

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb, adminFieldValue } from "@/lib/firebase/admin";
+import { adminDb, adminTimestamp } from "@/lib/firebase/admin";
 import { createNotification } from "@/lib/firebase/utils";
 import type { Order } from "@/lib/firebase/types";
+import admin from "firebase-admin";
 
 export const runtime = "nodejs";
 
@@ -46,8 +47,8 @@ export async function POST(req: NextRequest) {
       paymentProof,
       paymentStatus: "pending_verification",
       status: "pending",
-      createdAt: adminFieldValue.serverTimestamp(),
-      updatedAt: adminFieldValue.serverTimestamp(),
+      createdAt: adminTimestamp.now(),
+      updatedAt: adminTimestamp.now(),
       rated: false,
     };
 
@@ -55,11 +56,11 @@ export async function POST(req: NextRequest) {
     const orderRef = await adminDb.collection("orders").add(orderData);
     const orderId = orderRef.id;
 
-    // ✅ UPDATE STATS (SAFE)
+    // ✅ UPDATE STATS (AMAN 100%)
     try {
       await adminDb.collection("stats").doc("main").update({
-        projectsCompleted: adminFieldValue.increment(1),
-        updatedAt: adminFieldValue.serverTimestamp(),
+        projectsCompleted: admin.firestore.FieldValue.increment(1),
+        updatedAt: adminTimestamp.now(),
       });
     } catch (err) {
       console.error("Stats update failed:", err);
@@ -74,7 +75,7 @@ export async function POST(req: NextRequest) {
         message: `Pesanan ${orderId.slice(0, 8)} sedang diverifikasi.`,
         read: false,
         link: "/profile",
-        createdAt: adminFieldValue.serverTimestamp(),
+        createdAt: adminTimestamp.now(),
       });
     }
 
@@ -86,10 +87,10 @@ export async function POST(req: NextRequest) {
       message: `Order baru dari ${userName} - Rp ${totalAmount.toLocaleString()}`,
       read: false,
       link: "/admin",
-      createdAt: adminFieldValue.serverTimestamp(),
+      createdAt: adminTimestamp.now(),
     });
 
-    // 📣 TELEGRAM
+    // 📣 TELEGRAM (AMAN)
     try {
       await fetch(`${req.nextUrl.origin}/api/telegram`, {
         method: "POST",
